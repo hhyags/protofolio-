@@ -1,0 +1,11 @@
+.next/
+node_modules/
+.npm-cache/
+
+*.log
+.env
+.env.*
+
+out/
+dist/
+build/
