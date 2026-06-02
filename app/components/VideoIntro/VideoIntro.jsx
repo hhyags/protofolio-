@@ -187,6 +187,17 @@ export default function VideoIntro({ videoSrc = '/hero-video.mp4' }) {
   const [isMuted, setIsMuted] = useState(true);
   const [hintVisible, setHintVisible] = useState(true);
 
+  const enableSound = useCallback(() => {
+    const v = videoMainRef.current;
+    if (!v) return;
+    v.muted = false;
+    v.defaultMuted = false;
+    v.volume = 1;
+    v.play().catch(() => {});
+    setIsMuted(false);
+    setHintVisible(false);
+  }, []);
+
   // Play/Pause toggle
   const togglePlay = useCallback(() => {
     const v = videoMainRef.current;
@@ -201,16 +212,15 @@ export default function VideoIntro({ videoSrc = '/hero-video.mp4' }) {
   const toggleMute = useCallback(() => {
     const v = videoMainRef.current;
     if (!v) return;
-    const nextMuted = !v.muted;
-    v.muted = nextMuted;
-    v.defaultMuted = nextMuted;
-    v.volume = nextMuted ? 0 : 1;
-    if (!nextMuted) {
-      v.play().catch(() => {});
-      setHintVisible(false);
+    if (v.muted) {
+      enableSound();
+      return;
     }
-    setIsMuted(nextMuted);
-  }, [isMuted]);
+    v.muted = true;
+    v.defaultMuted = true;
+    v.volume = 0;
+    setIsMuted(true);
+  }, [enableSound]);
 
   // Scroll to next section
   const scrollNext = () => {
@@ -264,7 +274,10 @@ export default function VideoIntro({ videoSrc = '/hero-video.mp4' }) {
       <div className={styles.grain} aria-hidden="true" />
 
       {/* Hero */}
-      <section ref={heroRef} className={styles.hero}>
+      <section ref={heroRef} className={styles.hero} onPointerDownCapture={(event) => {
+        if (event.target.closest('button, a')) return;
+        if (isMuted) enableSound();
+      }}>
 
         {/* Ambient blur layer */}
         <div className={styles.videoBluWrap}>
@@ -322,9 +335,10 @@ export default function VideoIntro({ videoSrc = '/hero-video.mp4' }) {
             aria-label={isPlaying ? 'Pause video' : 'Play video'}>
             {isPlaying ? <IconPause /> : <IconPlay />}
           </button>
-          <button className={styles.ctrlBtn} onClick={toggleMute}
+          <button className={`${styles.ctrlBtn} ${styles.soundBtn}`} onClick={toggleMute}
             aria-label={isMuted ? 'Unmute video' : 'Mute video'}>
             {isMuted ? <IconMuted /> : <IconSound />}
+            <span>{isMuted ? 'Sound On' : 'Sound Off'}</span>
           </button>
         </div>
 
